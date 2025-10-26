@@ -1,0 +1,89 @@
+---
+image: docker:20.10.16
+
+pipelines:
+  branches:
+    DEVOPSOCT-30:
+      - step:
+          name: Build & Test - Dev Environment
+          services:
+            - docker
+          caches:
+            - docker
+          script:
+            - apk add --no-cache make bash
+            - cd api-mysql
+            # Use secure DB_PASSWORD from Bitbucket repository variables
+            - export DB_PASSWORD=${DB_PASSWORD_DEV}
+            # Configure Docker to use legacy builder
+            - export DOCKER_BUILDKIT=0
+            - export COMPOSE_DOCKER_CLI_BUILD=0
+            # Set CI flag to use docker-compose.ci.yml
+            - export CI=true
+            - make build
+            - make start
+            - make db:wait
+            - make test
+            - make down
+
+      - step:
+          name: Build & Test - QA Environment
+          services:
+            - docker
+          caches:
+            - docker
+          script:
+            - apk add --no-cache make bash
+            - cd api-mysql
+            - export DB_PASSWORD=${DB_PASSWORD_QA}
+            - export DOCKER_BUILDKIT=0
+            - export COMPOSE_DOCKER_CLI_BUILD=0
+            - export CI=true
+            - make build
+            - make start
+            - make db:wait
+            - make test
+            - make down
+
+      - step:
+          name: Build & Test - Staging Environment
+          services:
+            - docker
+          caches:
+            - docker
+          script:
+            - apk add --no-cache make bash
+            - cd api-mysql
+            - export DB_PASSWORD=${DB_PASSWORD_STAGING}
+            - export DOCKER_BUILDKIT=0
+            - export COMPOSE_DOCKER_CLI_BUILD=0
+            - export CI=true
+            - make build
+            - make start
+            - make db:wait
+            - make test
+            - make down
+
+      - step:
+          name: Build & Test - Production Environment
+          services:
+            - docker
+          caches:
+            - docker
+          script:
+            - apk add --no-cache make bash
+            - cd api-mysql
+            - export DB_PASSWORD=${DB_PASSWORD_PROD}
+            - export DOCKER_BUILDKIT=0
+            - export COMPOSE_DOCKER_CLI_BUILD=0
+            - export CI=true
+            - make build
+            - make start
+            - make db:wait
+            - make test
+            - make down
+
+definitions:
+  services:
+    docker:
+      memory: 2048
