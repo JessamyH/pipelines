@@ -1,0 +1,38 @@
+image: docker:20.10.16
+
+pipelines:
+  branches:
+    DEVOPSOCT-26:
+      - step:
+          name: Build & Deploy static-site Docker container
+          services:
+            - docker
+          caches:
+            - docker
+          script:
+            # Tools for the step container (Alpine)
+            - apk add --no-cache make curl
+
+            # Change to project directory
+            - cd static-site
+
+            # Build and test directly with Docker
+            - docker build -t static-site:v1.0.0 .
+            - docker run -d --name static-web -p 8080:80 static-site:v1.0.0
+            - sleep 5  # Give container time to start
+
+            # Simple verification
+            - docker run --rm --network container:static-web curlimages/curl:8.10.1 http://localhost/ | tee /tmp/response.html
+            - grep -q "Hello from Jessamy's Nginx" /tmp/response.html
+
+            # Cleanup
+            - docker stop static-web
+            - docker rm static-web
+
+          artifacts:
+            - /tmp/response.html
+
+definitions:
+  services:
+    docker:
+      memory: 2048
