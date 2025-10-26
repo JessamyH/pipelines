@@ -1,0 +1,10 @@
+services:
+  web:
+    build: .
+    container_name: static-web
+    ports:
+      - "8080:80"
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    restart: unless-stopped
